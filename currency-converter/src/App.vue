@@ -3,14 +3,27 @@
   <div class="row" id="app">
     <div class="col-6">
       <fieldset>
-      <b-dropdown id="dropdown-1">
-        <b-dropdown-item v-for="(name,value) in names" :key="value.value">{{value}}</b-dropdown-item>
-      </b-dropdown>
-      <input type="text/javascript"
-             ref="baseCurrency"
-             value="">
-      Convert to
-    </fieldset>
+        <input type="text/javascript"
+              ref="baseValue"
+              value=""
+              v-model="inputValue"
+              @keyup="convertValue()">
+        <b-dropdown v-bind:text="inputCurrency" class="m-2" variant="primary">
+          <b-dropdown-item v-for="(name,value) in names" :key="value.value"
+                          @click="inputCurrency = value; convertValue()">{{value}}</b-dropdown-item>
+        </b-dropdown>
+        Convert to
+        <b-dropdown v-bind:text="outputCurrency" class="m-2" variant="success">
+        <b-dropdown-item v-for="(name,value) in names" :key="value.value"
+                        @click="outputCurrency = value; convertValue()">{{value}}</b-dropdown-item>
+        </b-dropdown>
+        <input type="text/javascript"
+            ref="baseValue"
+            value=""
+            v-model="outputValue"
+            @keyup="convertValue()">
+      </fieldset>
+
     </div>
   </div>
 
@@ -19,23 +32,16 @@
 <script>
 export default {
   name: 'app',
-  components: {
-  },
   data() {
     return {
       currencies: [],
-      names: []
+      names: [],
+      currentBase: [],
+      inputCurrency: "--",
+      outputCurrency: "--",
+      inputValue: null,
+      outputValue: null
     }
-  },
-  getRates(base) {
-    let rates
-    for (let key in base) {
-      if (base.hasOwnProperty(key) && key == 'rates') {
-        rates = self.currencies[key];
-        console.log(rates)
-      }
-    }
-    return rates
   },
   created() {
     console.log("ENTROU")
@@ -52,7 +58,21 @@ export default {
           }
         }
     })
-  
+  },
+  methods: {
+    convertValue() {
+      let url = 'https://api.exchangeratesapi.io/latest?base=' + this.inputCurrency + '&symbols=' + this.outputCurrency;
+      let self = this;
+      this.$axios.get(url)
+      .then( function(response) {
+        self.currentBase = response.data.rates;
+        console.log(self.currentBase[0]);
+
+        for(let i in self.currentBase) {
+          self.outputValue = self.currentBase[i]*self.inputValue;
+        }
+      })
+    }
   }
 }
 </script>
